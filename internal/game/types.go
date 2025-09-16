@@ -12,10 +12,16 @@ const (
 	GameHeight = 120.0
 
 	// Physics constants
-	Gravity     = 150.0
-	JumpSpeed   = -100.0
-	MoveSpeed   = 25.0
-	AirFriction = 25.0
+	Gravity          = 150.0
+	JumpSpeed        = -100.0
+	MaxMoveSpeed     = 25.0  // Maximum horizontal velocity
+	MoveAcceleration = 250.0 // How quickly player accelerates horizontally
+	InitialMoveSpeed = 5.0   // Instant velocity boost when first pressing key
+	AirFriction      = 30.0  // Friction when no input is pressed
+
+	// Input smoothing constants
+	InputGraceFrames = 5    // Frames to maintain input momentum after key release
+	MomentumDecay    = 0.85 // How quickly momentum decays per frame
 
 	// Player constants
 	PlayerRadius = 1.5
@@ -53,12 +59,15 @@ func (p Platform) ToRect() physics.Rect {
 }
 
 type Game struct {
-	Player    Player
-	Platforms []Platform
-	Camera    physics.Vector2
-	Score     int
-	GameOver  bool
-	HighestY  float64
+	Player        Player
+	Platforms     []Platform
+	Camera        physics.Vector2
+	Score         int
+	GameOver      bool
+	HighestY      float64
+	LeftKeyTime   int     // Frames since left key was last pressed (0 = just pressed)
+	RightKeyTime  int     // Frames since right key was last pressed (0 = just pressed)
+	InputMomentum float64 // Momentum from recent input to smooth over gaps
 }
 
 func NewGame() *Game {
@@ -68,11 +77,14 @@ func NewGame() *Game {
 			Velocity: physics.Vector2{X: 0, Y: 0},
 			Radius:   PlayerRadius,
 		},
-		Platforms: generateInitialPlatforms(),
-		Camera:    physics.Vector2{X: 0, Y: 0},
-		Score:     0,
-		GameOver:  false,
-		HighestY:  PlayerStartY,
+		Platforms:     generateInitialPlatforms(),
+		Camera:        physics.Vector2{X: 0, Y: 0},
+		Score:         0,
+		GameOver:      false,
+		HighestY:      PlayerStartY,
+		LeftKeyTime:   999, // Start with high values (no recent input)
+		RightKeyTime:  999,
+		InputMomentum: 0,
 	}
 }
 
