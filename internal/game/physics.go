@@ -3,6 +3,7 @@ package game
 import (
 	"doodle-jump/internal/physics"
 	"math"
+	"math/rand"
 )
 
 const dt = 1.0 / 60.0 // 60 FPS simulation
@@ -96,24 +97,67 @@ func (g *Game) updateCamera() {
 func (g *Game) generatePlatformsIfNeeded() {
 	// Find the highest platform
 	highestPlatform := GameHeight
+	var highestPlatformObj Platform
 	for _, platform := range g.Platforms {
 		if platform.Position.Y < highestPlatform {
 			highestPlatform = platform.Position.Y
+			highestPlatformObj = platform
 		}
 	}
 	
 	// If the highest platform is getting close to camera view, generate more
-	if highestPlatform > g.Camera.Y - PlatformSpacing*5 {
-		// Add more platforms above
+	if highestPlatform > g.Camera.Y - MaxPlatformSpacing*5 {
+		// Add more platforms above using smart placement
+		currentY := highestPlatform
+		lastPlatform := highestPlatformObj
+		
 		for i := 0; i < 5; i++ {
-			newY := highestPlatform - PlatformSpacing*float64(i+1)
-			newX := float64((len(g.Platforms)+i)*11 % int(GameWidth-PlatformWidth))
+			// Random vertical spacing within safe range
+			spacing := MinPlatformSpacing + rand.Float64()*(MaxPlatformSpacing-MinPlatformSpacing)
+			currentY -= spacing
 			
-			g.Platforms = append(g.Platforms, Platform{
-				Position: physics.Vector2{X: newX, Y: newY},
+			// Generate new X position that's reachable from last platform
+			var newX float64
+			maxAttempts := 10
+			
+			for attempt := 0; attempt < maxAttempts; attempt++ {
+				candidateX := rand.Float64() * (GameWidth - PlatformWidth)
+				
+				// Check horizontal distance (accounting for screen wrapping)
+				horizontalDist := math.Abs(candidateX + PlatformWidth/2 - (lastPlatform.Position.X + PlatformWidth/2))
+				wrapDist := GameWidth - horizontalDist
+				if wrapDist < horizontalDist {
+					horizontalDist = wrapDist
+				}
+				
+				if horizontalDist <= MaxHorizontalGap {
+					newX = candidateX
+					break
+				}
+				
+				// Fallback: place within safe distance
+				if attempt == maxAttempts-1 {
+					maxOffset := MaxHorizontalGap * 0.7
+					offset := (rand.Float64()*2 - 1) * maxOffset
+					newX = lastPlatform.Position.X + offset
+					
+					// Keep within bounds
+					if newX < 0 {
+						newX = 0
+					} else if newX > GameWidth-PlatformWidth {
+						newX = GameWidth - PlatformWidth
+					}
+				}
+			}
+			
+			newPlatform := Platform{
+				Position: physics.Vector2{X: newX, Y: currentY},
 				Width:    PlatformWidth,
 				Height:   PlatformHeight,
-			})
+			}
+			
+			g.Platforms = append(g.Platforms, newPlatform)
+			lastPlatform = newPlatform
 		}
 	}
 	

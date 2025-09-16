@@ -35,7 +35,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func tickCmd() tea.Cmd {
-	return tea.Tick(time.Millisecond*16, func(t time.Time) tea.Msg {
+	return tea.Tick(time.Millisecond*16, func(t time.Time) tea.Msg { // 16ms = 60FPS (rounded)
 		return tickMsg(t)
 	})
 }
