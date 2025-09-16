@@ -29,12 +29,12 @@ const (
 	PlayerStartY = GameHeight - 10
 
 	// Platform constants
-	PlatformWidth      = 12.0
-	PlatformHeight     = 1.0
-	MinPlatformSpacing = 10.0 // Minimum vertical distance between platforms
-	MaxPlatformSpacing = 16.0 // Maximum vertical distance between platforms
-	MaxHorizontalGap   = 25.0 // Maximum horizontal distance player can jump
-	MaxPlatforms       = 17
+	PlatformWidth            = 12.0
+	PlatformHeight           = 1.0
+	MinPlatformVerticalGap   = 10.0 // Minimum vertical distance between platforms
+	MaxPlatformVerticalGap   = 25.0 // Maximum vertical distance between platforms
+	MaxPlatformHorizontalGap = 25.0 // Maximum horizontal distance player can jump
+	MaxPlatforms             = 20
 )
 
 type Player struct {
@@ -104,7 +104,7 @@ func generateInitialPlatforms() []Platform {
 	currentY := PlayerStartY
 	for i := 1; i < MaxPlatforms; i++ {
 		// Random vertical spacing within safe range
-		spacing := MinPlatformSpacing + rand.Float64()*(MaxPlatformSpacing-MinPlatformSpacing)
+		spacing := MinPlatformVerticalGap + rand.Float64()*(MaxPlatformVerticalGap-MinPlatformVerticalGap)
 		currentY -= spacing
 
 		// Generate candidate X positions and pick one that's reachable
@@ -126,7 +126,7 @@ func generateInitialPlatforms() []Platform {
 				horizontalDist = wrapDist
 			}
 
-			if horizontalDist <= MaxHorizontalGap {
+			if horizontalDist <= MaxPlatformHorizontalGap {
 				newX = candidateX
 				break
 			}
@@ -134,7 +134,7 @@ func generateInitialPlatforms() []Platform {
 			// If we can't find a good spot, place it closer to the last platform
 			if attempt == maxAttempts-1 {
 				// Place within safe horizontal distance
-				maxOffset := MaxHorizontalGap * 0.7          // Be conservative
+				maxOffset := MaxPlatformHorizontalGap * 0.7  // Be conservative
 				offset := (rand.Float64()*2 - 1) * maxOffset // -maxOffset to +maxOffset
 				newX = lastPlatform.Position.X + offset
 

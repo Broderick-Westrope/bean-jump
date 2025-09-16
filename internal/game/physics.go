@@ -148,14 +148,14 @@ func (g *Game) generatePlatformsIfNeeded() {
 	}
 
 	// If the highest platform is getting close to camera view, generate more
-	if highestPlatform > g.Camera.Y-MaxPlatformSpacing*5 {
+	if highestPlatform > g.Camera.Y-MaxPlatformVerticalGap*5 {
 		// Add more platforms above using smart placement
 		currentY := highestPlatform
 		lastPlatform := highestPlatformObj
 
 		for i := 0; i < 5; i++ {
 			// Random vertical spacing within safe range
-			spacing := MinPlatformSpacing + rand.Float64()*(MaxPlatformSpacing-MinPlatformSpacing)
+			spacing := MinPlatformVerticalGap + rand.Float64()*(MaxPlatformVerticalGap-MinPlatformVerticalGap)
 			currentY -= spacing
 
 			// Generate new X position that's reachable from last platform
@@ -172,14 +172,14 @@ func (g *Game) generatePlatformsIfNeeded() {
 					horizontalDist = wrapDist
 				}
 
-				if horizontalDist <= MaxHorizontalGap {
+				if horizontalDist <= MaxPlatformHorizontalGap {
 					newX = candidateX
 					break
 				}
 
 				// Fallback: place within safe distance
 				if attempt == maxAttempts-1 {
-					maxOffset := MaxHorizontalGap * 0.7
+					maxOffset := MaxPlatformHorizontalGap * 0.7
 					offset := (rand.Float64()*2 - 1) * maxOffset
 					newX = lastPlatform.Position.X + offset
 
