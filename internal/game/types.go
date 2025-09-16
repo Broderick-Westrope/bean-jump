@@ -2,8 +2,8 @@ package game
 
 import (
 	"doodle-jump/internal/physics"
+	"math"
 	"math/rand"
-	"time"
 )
 
 const (
@@ -77,7 +77,6 @@ func NewGame() *Game {
 			Velocity: physics.Vector2{X: 0, Y: 0},
 			Radius:   PlayerRadius,
 		},
-		Platforms:     generateInitialPlatforms(),
 		Camera:        physics.Vector2{X: 0, Y: 0},
 		Score:         0,
 		GameOver:      false,
@@ -85,42 +84,36 @@ func NewGame() *Game {
 		LeftKeyTime:   999, // Start with high values (no recent input)
 		RightKeyTime:  999,
 		InputMomentum: 0,
+		Platforms: []Platform{
+			// Starting platform
+			{
+				Position: physics.Vector2{X: GameWidth/2 - PlatformWidth/2, Y: PlayerStartY + 5},
+				Width:    PlatformWidth,
+				Height:   PlatformHeight,
+			},
+		},
 	}
 }
 
-func generateInitialPlatforms() []Platform {
-	rand.Seed(time.Now().UnixNano())
+func generateNewPlatforms(count int, last Platform) []Platform {
+	output := make([]Platform, 0, count)
 
-	platforms := []Platform{
-		// Starting platform
-		{
-			Position: physics.Vector2{X: GameWidth/2 - PlatformWidth/2, Y: PlayerStartY + 5},
-			Width:    PlatformWidth,
-			Height:   PlatformHeight,
-		},
-	}
+	// Add more platforms above using smart placement
+	currentY := last.Position.Y
 
-	// Generate platforms going upward with smart placement
-	currentY := PlayerStartY
-	for i := 1; i < MaxPlatforms; i++ {
+	for range count {
 		// Random vertical spacing within safe range
 		spacing := MinPlatformVerticalGap + rand.Float64()*(MaxPlatformVerticalGap-MinPlatformVerticalGap)
 		currentY -= spacing
 
-		// Generate candidate X positions and pick one that's reachable
-		lastPlatform := platforms[len(platforms)-1]
+		// Generate new X position that's reachable from last platform
 		var newX float64
-
-		// Try to place platform within reasonable horizontal distance
 		maxAttempts := 10
-		for attempt := 0; attempt < maxAttempts; attempt++ {
-			// Random X position
+		for attempt := range maxAttempts {
 			candidateX := rand.Float64() * (GameWidth - PlatformWidth)
 
-			// Check if horizontal distance is reasonable
-			horizontalDist := abs(candidateX + PlatformWidth/2 - (lastPlatform.Position.X + PlatformWidth/2))
-
-			// Account for screen wrapping - player can wrap around
+			// Check horizontal distance (accounting for screen wrapping)
+			horizontalDist := math.Abs(candidateX + PlatformWidth/2 - (last.Position.X + PlatformWidth/2))
 			wrapDist := GameWidth - horizontalDist
 			if wrapDist < horizontalDist {
 				horizontalDist = wrapDist
@@ -131,35 +124,27 @@ func generateInitialPlatforms() []Platform {
 				break
 			}
 
-			// If we can't find a good spot, place it closer to the last platform
+			// Fallback: place within safe distance
 			if attempt == maxAttempts-1 {
-				// Place within safe horizontal distance
-				maxOffset := MaxPlatformHorizontalGap * 0.7  // Be conservative
+				maxOffset := MaxPlatformHorizontalGap * 0.7  // be conservative
 				offset := (rand.Float64()*2 - 1) * maxOffset // -maxOffset to +maxOffset
-				newX = lastPlatform.Position.X + offset
+				newX = last.Position.X + offset
 
 				// Keep within bounds
-				if newX < 0 {
-					newX = 0
-				} else if newX > GameWidth-PlatformWidth {
-					newX = GameWidth - PlatformWidth
-				}
+				newX = max(newX, 0)
+				newX = min(newX, GameWidth-PlatformWidth)
 			}
 		}
 
-		platforms = append(platforms, Platform{
+		newPlatform := Platform{
 			Position: physics.Vector2{X: newX, Y: currentY},
 			Width:    PlatformWidth,
 			Height:   PlatformHeight,
-		})
+		}
+
+		output = append(output, newPlatform)
+		last = newPlatform
 	}
 
-	return platforms
-}
-
-func abs(x float64) float64 {
-	if x < 0 {
-		return -x
-	}
-	return x
+	return output
 }

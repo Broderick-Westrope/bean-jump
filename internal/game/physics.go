@@ -3,7 +3,6 @@ package game
 import (
 	"doodle-jump/internal/physics"
 	"math"
-	"math/rand"
 )
 
 const dt = 1.0 / 60.0 // 60 FPS simulation
@@ -97,7 +96,7 @@ func (g *Game) Update(leftPressed, rightPressed bool) {
 	}
 
 	// Generate new platforms if needed
-	g.generatePlatformsIfNeeded()
+	g.platformMaintenance()
 }
 
 func (g *Game) checkPlatformCollisions() {
@@ -136,73 +135,8 @@ func (g *Game) updateCamera() {
 	}
 }
 
-func (g *Game) generatePlatformsIfNeeded() {
-	// Find the highest platform
-	highestPlatform := GameHeight
-	var highestPlatformObj Platform
-	for _, platform := range g.Platforms {
-		if platform.Position.Y < highestPlatform {
-			highestPlatform = platform.Position.Y
-			highestPlatformObj = platform
-		}
-	}
-
-	// If the highest platform is getting close to camera view, generate more
-	if highestPlatform > g.Camera.Y-MaxPlatformVerticalGap*5 {
-		// Add more platforms above using smart placement
-		currentY := highestPlatform
-		lastPlatform := highestPlatformObj
-
-		for i := 0; i < 5; i++ {
-			// Random vertical spacing within safe range
-			spacing := MinPlatformVerticalGap + rand.Float64()*(MaxPlatformVerticalGap-MinPlatformVerticalGap)
-			currentY -= spacing
-
-			// Generate new X position that's reachable from last platform
-			var newX float64
-			maxAttempts := 10
-
-			for attempt := 0; attempt < maxAttempts; attempt++ {
-				candidateX := rand.Float64() * (GameWidth - PlatformWidth)
-
-				// Check horizontal distance (accounting for screen wrapping)
-				horizontalDist := math.Abs(candidateX + PlatformWidth/2 - (lastPlatform.Position.X + PlatformWidth/2))
-				wrapDist := GameWidth - horizontalDist
-				if wrapDist < horizontalDist {
-					horizontalDist = wrapDist
-				}
-
-				if horizontalDist <= MaxPlatformHorizontalGap {
-					newX = candidateX
-					break
-				}
-
-				// Fallback: place within safe distance
-				if attempt == maxAttempts-1 {
-					maxOffset := MaxPlatformHorizontalGap * 0.7
-					offset := (rand.Float64()*2 - 1) * maxOffset
-					newX = lastPlatform.Position.X + offset
-
-					// Keep within bounds
-					if newX < 0 {
-						newX = 0
-					} else if newX > GameWidth-PlatformWidth {
-						newX = GameWidth - PlatformWidth
-					}
-				}
-			}
-
-			newPlatform := Platform{
-				Position: physics.Vector2{X: newX, Y: currentY},
-				Width:    PlatformWidth,
-				Height:   PlatformHeight,
-			}
-
-			g.Platforms = append(g.Platforms, newPlatform)
-			lastPlatform = newPlatform
-		}
-	}
-
+// platformMaintenance removes platforms that are far below the camera and creates new platforms when the camera is nearing the highest existing plaform.
+func (g *Game) platformMaintenance() {
 	// Remove platforms that are far below camera
 	var activePlatforms []Platform
 	for _, platform := range g.Platforms {
@@ -210,5 +144,21 @@ func (g *Game) generatePlatformsIfNeeded() {
 			activePlatforms = append(activePlatforms, platform)
 		}
 	}
+
+	// Find the highest platform
+	highestPlatformHeight := GameHeight
+	var highestPlatform Platform
+	for _, platform := range activePlatforms {
+		if platform.Position.Y < highestPlatformHeight {
+			highestPlatformHeight = platform.Position.Y
+			highestPlatform = platform
+		}
+	}
+
+	// If the highest platform is getting close to camera view, generate 5 more
+	if highestPlatformHeight > g.Camera.Y-MaxPlatformVerticalGap*5 {
+		activePlatforms = append(activePlatforms, generateNewPlatforms(5, highestPlatform)...)
+	}
+
 	g.Platforms = activePlatforms
 }
