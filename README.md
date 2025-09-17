@@ -1,4 +1,4 @@
-# DoodleJump TUI
+# Bean Jump
 
 A terminal-based DoodleJump clone built with Go, Bubble Tea, and physics simulation.
 
