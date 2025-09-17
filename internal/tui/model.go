@@ -3,6 +3,7 @@ package tui
 import (
 	"doodle-jump/internal/game"
 	"fmt"
+	"strconv"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -87,10 +88,13 @@ func (m Model) View() string {
 func (m Model) renderGame() string {
 	// Create a 2D grid to render the game
 	grid := make([][]rune, m.height)
+	colorGrid := make([][]string, m.height) // Track colors for each position
 	for i := range grid {
 		grid[i] = make([]rune, m.width)
+		colorGrid[i] = make([]string, m.width)
 		for j := range grid[i] {
 			grid[i][j] = ' '
+			colorGrid[i][j] = ""
 		}
 	}
 
@@ -113,9 +117,26 @@ func (m Model) renderGame() string {
 		y := int(relativeY * scaleY)
 
 		if y >= 0 && y < m.height {
+			var platformColor string
+			platformChar := '-'
+			if platform.Boost > 0 {
+				platformColor = "2"
+				platformChar = '='
+			}
 			for x := startX; x <= endX && x < m.width; x++ {
 				if x >= 0 {
-					grid[y][x] = '-'
+					grid[y][x] = platformChar
+					colorGrid[y][x] = platformColor
+				}
+			}
+
+			// Render boost level above the platform if it has boost
+			if platform.Boost != 0 {
+				centerX := int((platform.Position.X + platform.Width/2) * scaleX)
+				powerUpY := y - 1 // Place boost level above platform
+				if centerX >= 0 && centerX < m.width && powerUpY >= 0 && powerUpY < m.height {
+					grid[powerUpY][centerX] = '⇧'
+					grid[powerUpY][centerX+1] = []rune(strconv.Itoa(int(platform.Boost)))[0]
 				}
 			}
 		}
@@ -130,10 +151,19 @@ func (m Model) renderGame() string {
 		grid[playerY][playerX] = 'O'
 	}
 
-	// Convert grid to string
+	// Convert grid to string with colors
 	result := ""
-	for _, row := range grid {
-		result += string(row) + "\n"
+	for i, row := range grid {
+		lineResult := ""
+		for j, char := range row {
+			if colorGrid[i][j] != "" {
+				style := lipgloss.NewStyle().Foreground(lipgloss.Color(colorGrid[i][j]))
+				lineResult += style.Render(string(char))
+			} else {
+				lineResult += string(char)
+			}
+		}
+		result += lineResult + "\n"
 	}
 
 	// Add score and instructions

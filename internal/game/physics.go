@@ -121,6 +121,9 @@ func (g *Game) checkPlatformCollisions() {
 			if physics.CircleRectCollision(playerCircle, platform.ToRect()) {
 				// Land on platform - jump!
 				g.Player.Velocity.Y = JumpSpeed
+				if platform.Boost != 0 {
+					g.Player.Velocity.Y -= float64(35 * platform.Boost)
+				}
 				break
 			}
 		}

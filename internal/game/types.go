@@ -47,6 +47,7 @@ type Platform struct {
 	Position physics.Vector2
 	Width    float64
 	Height   float64
+	Boost    int
 }
 
 func (p Platform) ToRect() physics.Rect {
@@ -136,10 +137,26 @@ func generateNewPlatforms(count int, last Platform) []Platform {
 			}
 		}
 
+		boost := 0
+		if rand.Intn(10) != 0 { // 1/10 chance of getting zero (ie. no boost)
+			const lambda = 0.6
+			boost = 10
+			for boost > 9 {
+				// Generate random variable on an exponential curve.
+				// NOTE: this also has a chance of resulting in zero on top of the previous 1/10 chance.
+				u := rand.Float64()
+				x := -math.Log(1-u) / lambda
+
+				// Convert to int
+				boost = int(math.Floor(x))
+			}
+		}
+
 		newPlatform := Platform{
 			Position: physics.Vector2{X: newX, Y: currentY},
 			Width:    PlatformWidth,
 			Height:   PlatformHeight,
+			Boost:    boost,
 		}
 
 		output = append(output, newPlatform)
