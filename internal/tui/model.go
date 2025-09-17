@@ -43,7 +43,7 @@ func tickCmd() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
+		m.width = min(msg.Width, 80)
 		m.height = msg.Height
 		return m, nil
 
@@ -81,7 +81,7 @@ func (m Model) View() string {
 	if m.game.GameOver {
 		return m.renderGameOver()
 	}
-	return m.renderGame()
+	return lipgloss.NewStyle().Border(lipgloss.NormalBorder(), true).Render(m.renderGame())
 }
 
 func (m Model) renderGame() string {
@@ -115,7 +115,7 @@ func (m Model) renderGame() string {
 		if y >= 0 && y < m.height {
 			for x := startX; x <= endX && x < m.width; x++ {
 				if x >= 0 {
-					grid[y][x] = '='
+					grid[y][x] = '-'
 				}
 			}
 		}
