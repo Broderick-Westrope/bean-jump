@@ -138,18 +138,15 @@ func generateNewPlatforms(count int, last Platform) []Platform {
 		}
 
 		boost := 0
-		if rand.Intn(10) != 0 { // 1/10 chance of getting zero (ie. no boost)
-			const lambda = 0.6
-			boost = 10
-			for boost > 9 {
-				// Generate random variable on an exponential curve.
-				// NOTE: this also has a chance of resulting in zero on top of the previous 1/10 chance.
-				u := rand.Float64()
-				x := -math.Log(1-u) / lambda
+		if rand.Intn(10) == 0 { // 1/10 chance of getting zero (ie. no boost)
+			const lambda = 0.5
+			// Generate random variable on an exponential curve.
+			// NOTE: this also has a chance of resulting in zero on top of the previous 1/10 chance.
+			u := rand.Float64()
+			x := -math.Log(1-u) / lambda
 
-				// Convert to int
-				boost = int(math.Floor(x))
-			}
+			// Convert to int
+			boost = int(math.Floor(x)) % 10 // mod 10 so that we never get a value higher than 9 whilst preserving the exponential bias
 		}
 
 		newPlatform := Platform{
