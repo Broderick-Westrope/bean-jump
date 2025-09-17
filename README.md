@@ -23,7 +23,7 @@ A terminal-based DoodleJump clone built with Go and Bubble Tea, featuring physic
 2. Run the game:
 
 ```bash
-cd doodle-jump
+cd bean-jump
 go run cmd/main.go
 ```
 

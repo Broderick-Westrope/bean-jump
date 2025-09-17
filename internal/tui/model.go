@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"doodle-jump/internal/game"
+	"bean-jump/internal/game"
 	"fmt"
 	"strconv"
 	"time"

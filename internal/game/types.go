@@ -1,7 +1,7 @@
 package game
 
 import (
-	"doodle-jump/internal/physics"
+	"bean-jump/internal/physics"
 	"math"
 	"math/rand"
 )

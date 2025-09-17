@@ -1,4 +1,4 @@
-module doodle-jump
+module bean-jump
 
 go 1.24.0
 

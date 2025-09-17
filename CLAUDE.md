@@ -14,7 +14,7 @@ DoodleJump TUI is a terminal-based DoodleJump clone built with Go and Bubble Tea
 go run cmd/main.go
 
 # Build executable
-go build -o doodle-jump cmd/main.go
+go build -o bean-jump cmd/main.go
 
 # Install dependencies
 go mod tidy

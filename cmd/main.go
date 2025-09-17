@@ -1,7 +1,7 @@
 package main
 
 import (
-	"doodle-jump/internal/tui"
+	"bean-jump/internal/tui"
 	"fmt"
 	"os"
 
