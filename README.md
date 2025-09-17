@@ -1,6 +1,8 @@
 # DoodleJump TUI
 
-A terminal-based DoodleJump clone built with Go and Bubble Tea, featuring physics simulation inspired by the go-go-go project.
+A terminal-based DoodleJump clone built with Go, Bubble Tea, and physics simulation.
+
+![Gameplay GIF](./gameplay.gif)
 
 ## Features
 
@@ -38,7 +40,7 @@ The project is structured with separation of concerns:
 
 ## Physics Inspiration
 
-This game uses physics concepts adapted from the go-go-go multiplayer stone game:
+This game uses physics concepts adapted from the game [go-go-go](https://github.com/yanmoyy/go-go-go):
 
 - **Vector-based movement**: Position and velocity calculations
 - **Collision detection**: Circle-rectangle collision for player-platform interactions
