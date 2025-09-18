@@ -29,12 +29,11 @@ const (
 	PlayerStartY = GameHeight - 10
 
 	// Platform constants
-	PlatformWidth            = 12.0
+	PlatformWidth            = 10.0
 	PlatformHeight           = 1.0
-	MinPlatformVerticalGap   = 10.0 // Minimum vertical distance between platforms
-	MaxPlatformVerticalGap   = 25.0 // Maximum vertical distance between platforms
+	MinPlatformVerticalGap   = 5.0  // Minimum vertical distance between platforms
+	MaxPlatformVerticalGap   = 28.0 // Maximum vertical distance between platforms
 	MaxPlatformHorizontalGap = 25.0 // Maximum horizontal distance player can jump
-	MaxPlatforms             = 20
 )
 
 type Player struct {
@@ -138,15 +137,16 @@ func generateNewPlatforms(count int, last Platform) []Platform {
 		}
 
 		boost := 0
-		if rand.Intn(10) == 0 { // 1/10 chance of getting zero (ie. no boost)
+		odds := 5 + int(math.Abs(math.Floor(currentY/100))) // 1/5 chance of getting zero (ie. no boost) and the odds get worse as the player goes up
+		if rand.Intn(odds) == 0 {
 			const lambda = 0.5
 			// Generate random variable on an exponential curve.
-			// NOTE: this also has a chance of resulting in zero on top of the previous 1/10 chance.
 			u := rand.Float64()
 			x := -math.Log(1-u) / lambda
 
 			// Convert to int
-			boost = int(math.Floor(x)) % 10 // mod 10 so that we never get a value higher than 9 whilst preserving the exponential bias
+			boost = int(math.Floor(x)) % 9 // mod 9 so that we never get a value higher than 8 whilst preserving the exponential bias
+			boost++                        // increment 1 so that the max value is 9 and the min is 1 (the odds of getting zero are previously determined)
 		}
 
 		newPlatform := Platform{
