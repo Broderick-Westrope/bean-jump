@@ -67,6 +67,9 @@ func (g *Game) Update(leftPressed, rightPressed bool) {
 	// Apply gravity
 	g.Player.Velocity = physics.ApplyGravity(g.Player.Velocity, Gravity, dt)
 
+	// Store previous position for swept collision detection
+	prevPosition := g.Player.Position
+
 	// Update position
 	g.Player.Position.X += g.Player.Velocity.X * dt
 	g.Player.Position.Y += g.Player.Velocity.Y * dt
@@ -79,7 +82,7 @@ func (g *Game) Update(leftPressed, rightPressed bool) {
 	}
 
 	// Check platform collisions
-	g.checkPlatformCollisions()
+	g.checkPlatformCollisions(prevPosition)
 
 	// Update camera to follow player
 	g.updateCamera()
@@ -99,26 +102,25 @@ func (g *Game) Update(leftPressed, rightPressed bool) {
 	g.platformMaintenance()
 }
 
-func (g *Game) checkPlatformCollisions() {
+func (g *Game) checkPlatformCollisions(prevPosition physics.Vector2) {
 	// Only check collisions when falling (positive velocity)
 	if g.Player.Velocity.Y <= 0 {
 		return
 	}
 
-	playerCircle := physics.Circle{
-		Center: g.Player.Position,
-		Radius: g.Player.Radius,
-	}
-
 	for _, platform := range g.Platforms {
-		// Skip platforms that are too far away
-		if math.Abs(platform.Position.Y-g.Player.Position.Y) > 10 {
+		// Expanded distance check to account for high-speed movement
+		maxDistanceToCheck := math.Max(20, math.Abs(g.Player.Velocity.Y*dt)+10)
+		if math.Abs(platform.Position.Y-g.Player.Position.Y) > maxDistanceToCheck {
 			continue
 		}
 
-		if physics.IsLandingOnPlatform(g.Player.Position, g.Player.Velocity.Y, platform.ToRect()) {
-			// Check if player is actually colliding with platform
-			if physics.CircleRectCollision(playerCircle, platform.ToRect()) {
+		platformRect := platform.ToRect()
+
+		// Use swept collision detection to prevent tunneling
+		if physics.SweptCollisionCheck(prevPosition, g.Player.Position, g.Player.Radius, platformRect) {
+			// Additional check: ensure we're landing on top, not hitting from sides
+			if physics.IsLandingOnPlatform(g.Player.Position, g.Player.Velocity.Y, platformRect) {
 				// Land on platform - jump!
 				g.Player.Velocity.Y = JumpSpeed
 				if platform.Boost != 0 {
